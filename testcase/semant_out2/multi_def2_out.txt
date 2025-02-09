@@ -1,0 +1,2 @@
+Multiple definition of variable 'z' in line 6.
+

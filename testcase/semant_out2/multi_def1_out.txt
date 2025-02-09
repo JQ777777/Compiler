@@ -1,0 +1,2 @@
+Multiple definition of variable 'x' in line 6.
+

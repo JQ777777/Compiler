@@ -1,0 +1,6 @@
+Division by zero in line 8
+
+invalid operators in line 8
+
+if cond type is invalid 11
+

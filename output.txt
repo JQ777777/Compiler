@@ -1,0 +1,85 @@
+declare i32 @getint()
+declare i32 @getch()
+declare float @getfloat()
+declare i32 @getarray(ptr)
+declare i32 @getfarray(ptr)
+declare void @putint(i32)
+declare void @putch(i32)
+declare void @putfloat(float)
+declare void @putarray(i32,ptr)
+declare void @putfarray(i32,ptr)
+declare void @_sysy_starttime(i32)
+declare void @_sysy_stoptime(i32)
+declare void @llvm.memset.p0.i32(ptr,i8,i32,i1)
+declare i32 @llvm.umax.i32(i32,i32)
+declare i32 @llvm.umin.i32(i32,i32)
+declare i32 @llvm.smax.i32(i32,i32)
+declare i32 @llvm.smin.i32(i32,i32)
+declare float @llvm.fmin.f32(float,float)
+declare float @llvm.fmax.f32(float,float)
+define i32 @main()
+{
+L0:  ;
+    br label %L1
+L1:  ;
+    %r1 = add i32 0,0
+    %r3 = add i32 0,0
+    %r5 = add i32 0,0
+    %r7 = add i32 0,0
+    %r8 = add i32 0,0
+    %r9 = add i32 0,0
+    %r10 = add i32 0,0
+    br label %L2
+L2:  ;
+    %r56 = phi i32 [%r8,%L1],[%r47,%L7]
+    %r55 = phi i32 [%r9,%L1],[%r54,%L7]
+    %r53 = phi i32 [%r10,%L1],[%r52,%L7]
+    %r51 = phi i32 [%r7,%L1],[%r50,%L7]
+    %r12 = add i32 21,0
+    %r13 = icmp slt i32 %r56,%r12
+    br i1 %r13, label %L3, label %L4
+L3:  ;
+    br label %L5
+L4:  ;
+    %r48 = add i32 0,0
+    ret i32 %r48
+L5:  ;
+    %r54 = phi i32 [%r55,%L3],[%r44,%L9]
+    %r52 = phi i32 [%r53,%L3],[%r23,%L9]
+    %r50 = phi i32 [%r51,%L3],[%r49,%L9]
+    %r15 = add i32 101,0
+    %r17 = sub i32 %r15,%r56
+    %r18 = icmp slt i32 %r54,%r17
+    br i1 %r18, label %L6, label %L7
+L6:  ;
+    %r19 = add i32 100,0
+    %r21 = sub i32 %r19,%r56
+    %r23 = sub i32 %r21,%r54
+    %r24 = add i32 5,0
+    %r26 = mul i32 %r24,%r56
+    %r27 = add i32 1,0
+    %r29 = mul i32 %r27,%r54
+    %r30 = add i32 %r26,%r29
+    %r32 = add i32 2,0
+    %r33 = sdiv i32 %r23,%r32
+    %r34 = add i32 %r30,%r33
+    %r35 = add i32 100,0
+    %r36 = icmp eq i32 %r34,%r35
+    br i1 %r36, label %L8, label %L9
+L7:  ;
+    %r46 = add i32 1,0
+    %r47 = add i32 %r56,%r46
+    br label %L2
+L8:  ;
+    call void @putint(i32 %r56)
+    call void @putint(i32 %r54)
+    call void @putint(i32 %r23)
+    %r40 = add i32 10,0
+    call void @putch(i32 %r40)
+    br label %L9
+L9:  ;
+    %r49 = phi i32 [%r50,%L6],[%r40,%L8]
+    %r43 = add i32 1,0
+    %r44 = add i32 %r54,%r43
+    br label %L5
+}

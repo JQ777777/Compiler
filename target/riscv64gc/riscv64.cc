@@ -1,0 +1,422 @@
+#include "riscv64.h"
+#include <assert.h>
+RiscV64InstructionConstructor RiscV64InstructionConstructor::instance;
+RiscV64InstructionConstructor *rvconstructor = RiscV64InstructionConstructor::GetConstructor();
+
+std::vector<Register *> RiscV64Instruction::GetReadReg() {
+    switch (OpTable[op].ins_formattype) {
+    case RvOpInfo::R_type:
+        return GetR_typeReadreg();
+    case RvOpInfo::R2_type:
+        return GetR2_typeReadreg();
+    case RvOpInfo::R4_type:
+        return GetR4_typeReadreg();
+    case RvOpInfo::I_type:
+        return GetI_typeReadreg();
+    case RvOpInfo::S_type:
+        return GetS_typeReadreg();
+    case RvOpInfo::B_type:
+        return GetB_typeReadreg();
+    case RvOpInfo::U_type:
+        return GetU_typeReadreg();
+    case RvOpInfo::J_type:
+        return GetJ_typeReadreg();
+    case RvOpInfo::CALL_type:
+        return GetCall_typeReadreg();
+    }
+    ERROR("Unexpected insformat");
+}
+
+std::vector<Register *> RiscV64Instruction::GetWriteReg() {
+    switch (OpTable[op].ins_formattype) {
+    case RvOpInfo::R_type:
+        return GetR_typeWritereg();
+    case RvOpInfo::R2_type:
+        return GetR2_typeWritereg();
+    case RvOpInfo::R4_type:
+        return GetR4_typeWritereg();
+    case RvOpInfo::I_type:
+        return GetI_typeWritereg();
+    case RvOpInfo::S_type:
+        return GetS_typeWritereg();
+    case RvOpInfo::B_type:
+        return GetB_typeWritereg();
+    case RvOpInfo::U_type:
+        return GetU_typeWritereg();
+    case RvOpInfo::J_type:
+        return GetJ_typeWritereg();
+    case RvOpInfo::CALL_type:
+        return GetCall_typeWritereg();
+    }
+    ERROR("Unexpected insformat");
+}
+
+// 事实上, 这种初始化方法只有C支持, C++并不支持这种初始化方法。
+// 但是clang++依旧可以正确编译该语法, 如果你换用g++编译，会直接得到编译失败的结果
+// 你可以选择换用等价写法来避免使用该C语言特性
+struct RvOpInfo OpTable[] = {
+[RISCV_SLL] = RvOpInfo{RvOpInfo::R_type, "sll", 1},
+[RISCV_SLLI] = RvOpInfo{RvOpInfo::I_type, "slli", 1},
+[RISCV_SRL] = RvOpInfo{RvOpInfo::R_type, "srl", 1},
+[RISCV_SRLI] = RvOpInfo{RvOpInfo::I_type, "srli", 1},
+[RISCV_SRA] = RvOpInfo{RvOpInfo::R_type, "sra", 1},
+[RISCV_SRAI] = RvOpInfo{RvOpInfo::I_type, "srai", 1},
+[RISCV_ADD] = RvOpInfo{RvOpInfo::R_type, "add", 1},
+[RISCV_ADDI] = RvOpInfo{RvOpInfo::I_type, "addi", 1},
+[RISCV_SUB] = RvOpInfo{RvOpInfo::R_type, "sub", 1},
+[RISCV_LUI] = RvOpInfo{RvOpInfo::U_type, "lui", 1},
+[RISCV_AUIPC] = RvOpInfo{RvOpInfo::U_type, "auipc", 1},
+[RISCV_XOR] = RvOpInfo{RvOpInfo::R_type, "xor", 1},
+[RISCV_XORI] = RvOpInfo{RvOpInfo::I_type, "xori", 1},
+[RISCV_OR] = RvOpInfo{RvOpInfo::R_type, "or", 1},
+[RISCV_ORI] = RvOpInfo{RvOpInfo::I_type, "ori", 1},
+[RISCV_AND] = RvOpInfo{RvOpInfo::R_type, "and", 1},
+[RISCV_ANDI] = RvOpInfo{RvOpInfo::I_type, "andi", 1},
+[RISCV_SLT] = RvOpInfo{RvOpInfo::R_type, "slt", 1},
+[RISCV_SLTI] = RvOpInfo{RvOpInfo::I_type, "slti", 1},
+[RISCV_SLTU] = RvOpInfo{RvOpInfo::R_type, "sltu", 1},
+[RISCV_SLTIU] = RvOpInfo{RvOpInfo::I_type, "sltiu", 1},
+[RISCV_BEQ] = RvOpInfo{RvOpInfo::B_type, "beq", 1},
+[RISCV_BNE] = RvOpInfo{RvOpInfo::B_type, "bne", 1},
+[RISCV_BLT] = RvOpInfo{RvOpInfo::B_type, "blt", 1},
+[RISCV_BGE] = RvOpInfo{RvOpInfo::B_type, "bge", 1},
+[RISCV_BLTU] = RvOpInfo{RvOpInfo::B_type, "bltu", 1},
+[RISCV_BGEU] = RvOpInfo{RvOpInfo::B_type, "bgeu", 1},
+[RISCV_JAL] = RvOpInfo{RvOpInfo::J_type, "jal", 1},
+[RISCV_JALR] = RvOpInfo{RvOpInfo::I_type, "jalr", 1},
+[RISCV_LB] = RvOpInfo{RvOpInfo::I_type, "lb", 3},
+[RISCV_LH] = RvOpInfo{RvOpInfo::I_type, "lh", 3},
+[RISCV_LBU] = RvOpInfo{RvOpInfo::I_type, "lbu", 3},
+[RISCV_LHU] = RvOpInfo{RvOpInfo::I_type, "lhu", 3},
+[RISCV_LW] = RvOpInfo{RvOpInfo::I_type, "lw", 3},
+[RISCV_SB] = RvOpInfo{RvOpInfo::S_type, "sb", 1},
+[RISCV_SH] = RvOpInfo{RvOpInfo::S_type, "sh", 1},
+[RISCV_SW] = RvOpInfo{RvOpInfo::S_type, "sw", 1},
+[RISCV_SLLW] = RvOpInfo{RvOpInfo::R_type, "sllw", 1},
+[RISCV_SLLIW] = RvOpInfo{RvOpInfo::I_type, "slliw", 1},
+[RISCV_SRLW] = RvOpInfo{RvOpInfo::R_type, "srlw", 1},
+[RISCV_SRLIW] = RvOpInfo{RvOpInfo::I_type, "srliw", 1},
+[RISCV_SRAW] = RvOpInfo{RvOpInfo::R_type, "sraw", 1},
+[RISCV_SRAIW] = RvOpInfo{RvOpInfo::I_type, "sraiw", 1},
+[RISCV_ADDW] = RvOpInfo{RvOpInfo::R_type, "addw", 1},
+[RISCV_ADDIW] = RvOpInfo{RvOpInfo::I_type, "addiw", 1},
+[RISCV_SUBW] = RvOpInfo{RvOpInfo::R_type, "subw", 1},
+[RISCV_LWU] = RvOpInfo{RvOpInfo::I_type, "lwu", 3},
+[RISCV_LD] = RvOpInfo{RvOpInfo::I_type, "ld", 3},
+[RISCV_SD] = RvOpInfo{RvOpInfo::S_type, "sd", 1},
+
+[RISCV_MUL] = RvOpInfo{RvOpInfo::R_type, "mul", 3},
+[RISCV_MULH] = RvOpInfo{RvOpInfo::R_type, "mulh", 3},
+[RISCV_MULHSU] = RvOpInfo{RvOpInfo::R_type, "mulhsu", 3},
+[RISCV_MULHU] = RvOpInfo{RvOpInfo::R_type, "mulhu", 3},
+[RISCV_DIV] = RvOpInfo{RvOpInfo::R_type, "div", 30},
+[RISCV_DIVU] = RvOpInfo{RvOpInfo::R_type, "divu", 30},
+[RISCV_REM] = RvOpInfo{RvOpInfo::R_type, "rem", 30},
+[RISCV_REMU] = RvOpInfo{RvOpInfo::R_type, "remu", 30},
+[RISCV_MULW] = RvOpInfo{RvOpInfo::R_type, "mulw", 3},
+[RISCV_DIVW] = RvOpInfo{RvOpInfo::R_type, "divw", 30},
+[RISCV_REMW] = RvOpInfo{RvOpInfo::R_type, "remw", 30},
+[RISCV_REMUW] = RvOpInfo{RvOpInfo::R_type, "remuw", 30},
+
+[RISCV_FMV_W_X] = RvOpInfo{RvOpInfo::R2_type, "fmv.w.x", 2},
+[RISCV_FMV_X_W] = RvOpInfo{RvOpInfo::R2_type, "fmv.x.w", 1},
+[RISCV_FCVT_S_W] = RvOpInfo{RvOpInfo::R2_type, "fcvt.s.w", 2},
+[RISCV_FCVT_D_W] = RvOpInfo{RvOpInfo::R2_type, "fcvt.d.w", 2},
+[RISCV_FCVT_S_WU] = RvOpInfo{RvOpInfo::R2_type, "fcvt.s.wu", 2},
+[RISCV_FCVT_D_WU] = RvOpInfo{RvOpInfo::R2_type, "fcvt.d.wu", 2},
+[RISCV_FCVT_W_S] = RvOpInfo{RvOpInfo::R2_type, "fcvt.w.s", 4},
+[RISCV_FCVT_W_D] = RvOpInfo{RvOpInfo::R2_type, "fcvt.w.d", 4},
+[RISCV_FCVT_WU_S] = RvOpInfo{RvOpInfo::R2_type, "fcvt.wu.s", 4},
+[RISCV_FCVT_WU_D] = RvOpInfo{RvOpInfo::R2_type, "fcvt.wu.d", 4},
+[RISCV_FLW] = RvOpInfo{RvOpInfo::I_type, "flw", 2},
+[RISCV_FLD] = RvOpInfo{RvOpInfo::I_type, "fld", 2},
+[RISCV_FSW] = RvOpInfo{RvOpInfo::S_type, "fsw", 4},
+[RISCV_FSD] = RvOpInfo{RvOpInfo::S_type, "fsd", 4},
+[RISCV_FADD_S] = RvOpInfo{RvOpInfo::R_type, "fadd.s", 5},
+[RISCV_FADD_D] = RvOpInfo{RvOpInfo::R_type, "fadd.d", 7},
+[RISCV_FSUB_S] = RvOpInfo{RvOpInfo::R_type, "fsub.s", 5},
+[RISCV_FSUB_D] = RvOpInfo{RvOpInfo::R_type, "fsub.d", 7},
+[RISCV_FMUL_S] = RvOpInfo{RvOpInfo::R_type, "fmul.s", 5},
+[RISCV_FMUL_D] = RvOpInfo{RvOpInfo::R_type, "fmul.d", 7},
+[RISCV_FDIV_S] = RvOpInfo{RvOpInfo::R_type, "fdiv.s", 30},
+[RISCV_FDIV_D] = RvOpInfo{RvOpInfo::R_type, "fdiv.d", 30},
+[RISCV_FSQRT_S] = RvOpInfo{RvOpInfo::R2_type, "fsqrt.s", 15},
+[RISCV_FSQRT_D] = RvOpInfo{RvOpInfo::R2_type, "fsqrt.d", 30},
+[RISCV_FMADD_S] = RvOpInfo{RvOpInfo::R4_type, "fmadd.s", 5},
+[RISCV_FMADD_D] = RvOpInfo{RvOpInfo::R4_type, "fmadd.d", 7},
+[RISCV_FMSUB_S] = RvOpInfo{RvOpInfo::R4_type, "fmsub.s", 5},
+[RISCV_FMSUB_D] = RvOpInfo{RvOpInfo::R4_type, "fmsub.d", 7},
+[RISCV_FNMSUB_S] = RvOpInfo{RvOpInfo::R4_type, "fnmsub.s", 5},
+[RISCV_FNMSUB_D] = RvOpInfo{RvOpInfo::R4_type, "fnmsub.d", 7},
+[RISCV_FNMADD_S] = RvOpInfo{RvOpInfo::R4_type, "fnmadd.s", 5},
+[RISCV_FNMADD_D] = RvOpInfo{RvOpInfo::R4_type, "fnmadd.d", 7},
+[RISCV_FSGNJ_S] = RvOpInfo{RvOpInfo::R_type, "fsgnj.s", 2},
+[RISCV_FSGNJ_D] = RvOpInfo{RvOpInfo::R_type, "fsgnj.d", 2},
+[RISCV_FSGNJN_S] = RvOpInfo{RvOpInfo::R_type, "fsgnjn.s", 2},
+[RISCV_FSGNJN_D] = RvOpInfo{RvOpInfo::R_type, "fsgnjn.d", 2},
+[RISCV_FSGNJX_S] = RvOpInfo{RvOpInfo::R_type, "fsgnjx.s", 2},
+[RISCV_FSGNJX_D] = RvOpInfo{RvOpInfo::R_type, "fsgnjx.d", 2},
+[RISCV_FMIN_S] = RvOpInfo{RvOpInfo::R_type, "fmin.s", 2},
+[RISCV_FMIN_D] = RvOpInfo{RvOpInfo::R_type, "fmin.d", 2},
+[RISCV_FMAX_S] = RvOpInfo{RvOpInfo::R_type, "fmax.s", 2},
+[RISCV_FMAX_D] = RvOpInfo{RvOpInfo::R_type, "fmax.d", 2},
+[RISCV_FEQ_S] = RvOpInfo{RvOpInfo::R_type, "feq.s", 4},
+[RISCV_FEQ_D] = RvOpInfo{RvOpInfo::R_type, "feq.d", 4},
+[RISCV_FLT_S] = RvOpInfo{RvOpInfo::R_type, "flt.s", 4},
+[RISCV_FLT_D] = RvOpInfo{RvOpInfo::R_type, "flt.d", 4},
+[RISCV_FLE_S] = RvOpInfo{RvOpInfo::R_type, "fle.s", 4},
+[RISCV_FLE_D] = RvOpInfo{RvOpInfo::R_type, "fle.d", 4},
+[RISCV_FCLASS_S] = RvOpInfo{RvOpInfo::R2_type, "fclass.s", 4},
+[RISCV_FCLASS_D] = RvOpInfo{RvOpInfo::R2_type, "fclass.d", 4},
+[RISCV_FMV_D_X] = RvOpInfo{RvOpInfo::R2_type, "fmv.d.x", 6},
+[RISCV_FMV_X_D] = RvOpInfo{RvOpInfo::R2_type, "fmv.x.d", 1},
+[RISCV_FCVT_S_L] = RvOpInfo{RvOpInfo::R2_type, "fcvt.s.l", 4},
+[RISCV_FCVT_D_L] = RvOpInfo{RvOpInfo::R2_type, "fcvt.d.l", 6},
+[RISCV_FCVT_S_LU] = RvOpInfo{RvOpInfo::R2_type, "fcvt.s.lu", 4},
+[RISCV_FCVT_D_LU] = RvOpInfo{RvOpInfo::R2_type, "fcvt.d.lu", 6},
+[RISCV_FCVT_L_S] = RvOpInfo{RvOpInfo::R2_type, "fcvt.l.s", 4},
+[RISCV_FCVT_L_D] = RvOpInfo{RvOpInfo::R2_type, "fcvt.l.d", 4},
+[RISCV_FCVT_LU_S] = RvOpInfo{RvOpInfo::R2_type, "fcvt.lu.s", 4},
+[RISCV_FCVT_LU_D] = RvOpInfo{RvOpInfo::R2_type, "fcvt.lu.d", 4},
+
+[RISCV_LI] = RvOpInfo{RvOpInfo::U_type, "li", 1},
+[RISCV_CALL] = RvOpInfo{RvOpInfo::CALL_type, "call", 1},
+
+[RISCV_BGT] = RvOpInfo{RvOpInfo::B_type, "bgt", 1},
+[RISCV_BLE] = RvOpInfo{RvOpInfo::B_type, "ble", 1},
+[RISCV_BGTU] = RvOpInfo{RvOpInfo::B_type, "bgtu", 1},
+[RISCV_BLEU] = RvOpInfo{RvOpInfo::B_type, "bleu", 1},
+
+[RISCV_FMV_S] = RvOpInfo{RvOpInfo::R2_type, "fmv.s", 2},
+[RISCV_FMV_D] = RvOpInfo{RvOpInfo::R2_type, "fmv.d", 2},
+
+[RISCV_SH1ADD] = RvOpInfo{RvOpInfo::R_type, "sh1add", 1},
+[RISCV_SH2ADD] = RvOpInfo{RvOpInfo::R_type, "sh2add", 1},
+[RISCV_SH3ADD] = RvOpInfo{RvOpInfo::R_type, "sh3add", 1},
+
+[RISCV_SH1ADDUW] = RvOpInfo{RvOpInfo::R_type, "sh1add.uw", 1},
+[RISCV_SH2ADDUW] = RvOpInfo{RvOpInfo::R_type, "sh2add.uw", 1},
+[RISCV_SH3ADDUW] = RvOpInfo{RvOpInfo::R_type, "sh3add.uw", 1},
+
+[RISCV_MIN] = RvOpInfo{RvOpInfo::R_type, "min", 1},
+[RISCV_MAX] = RvOpInfo{RvOpInfo::R_type, "max", 1},
+[RISCV_MINU] = RvOpInfo{RvOpInfo::R_type, "minu", 1},
+[RISCV_MAXU] = RvOpInfo{RvOpInfo::R_type, "maxu", 1},
+
+[RISCV_FCVT_D_S] = RvOpInfo{RvOpInfo::R2_type, "fcvt.d.s", 2},
+[RISCV_ZEXT_W] = RvOpInfo{RvOpInfo::R2_type, "zext.w", 1},
+
+
+[RISCV_FNEG_S] = RvOpInfo{RvOpInfo::R2_type, "fneg.s", 2},
+[RISCV_FNEG_D] = RvOpInfo{RvOpInfo::R2_type, "fneg.d", 2},
+};
+
+#pragma GCC diagnostic ignored "-Wwritable-strings"
+#pragma GCC diagnostic ignored "-Wc99-designator"
+struct RiscV64RegisterInfo RiscV64Registers[] = {
+[RISCV_x0] = {"x0"},    [RISCV_x1] = {"ra"},           [RISCV_x2] = {"sp"},
+[RISCV_x3] = {"gp"},    [RISCV_x4] = {"tp"},           [RISCV_x5] = {"t0"},
+[RISCV_x6] = {"t1"},    [RISCV_x7] = {"t2"},           [RISCV_x8] = {"fp"},
+[RISCV_x9] = {"s1"},    [RISCV_x10] = {"a0"},          [RISCV_x11] = {"a1"},
+[RISCV_x12] = {"a2"},   [RISCV_x13] = {"a3"},          [RISCV_x14] = {"a4"},
+[RISCV_x15] = {"a5"},   [RISCV_x16] = {"a6"},          [RISCV_x17] = {"a7"},
+[RISCV_x18] = {"s2"},   [RISCV_x19] = {"s3"},          [RISCV_x20] = {"s4"},
+[RISCV_x21] = {"s5"},   [RISCV_x22] = {"s6"},          [RISCV_x23] = {"s7"},
+[RISCV_x24] = {"s8"},   [RISCV_x25] = {"s9"},          [RISCV_x26] = {"s10"},
+[RISCV_x27] = {"s11"},  [RISCV_x28] = {"t3"},          [RISCV_x29] = {"t4"},
+[RISCV_x30] = {"t5"},   [RISCV_x31] = {"t6"},          [RISCV_f0] = {"ft0"},
+[RISCV_f1] = {"ft1"},   [RISCV_f2] = {"ft2"},          [RISCV_f3] = {"ft3"},
+[RISCV_f4] = {"ft4"},   [RISCV_f5] = {"ft5"},          [RISCV_f6] = {"ft6"},
+[RISCV_f7] = {"ft7"},   [RISCV_f8] = {"fs0"},          [RISCV_f9] = {"fs1"},
+[RISCV_f10] = {"fa0"},  [RISCV_f11] = {"fa1"},         [RISCV_f12] = {"fa2"},
+[RISCV_f13] = {"fa3"},  [RISCV_f14] = {"fa4"},         [RISCV_f15] = {"fa5"},
+[RISCV_f16] = {"fa6"},  [RISCV_f17] = {"fa7"},         [RISCV_f18] = {"fs2"},
+[RISCV_f19] = {"fs3"},  [RISCV_f20] = {"fs4"},         [RISCV_f21] = {"fs5"},
+[RISCV_f22] = {"fs6"},  [RISCV_f23] = {"fs7"},         [RISCV_f24] = {"fs8"},
+[RISCV_f25] = {"fs9"},  [RISCV_f26] = {"fs10"},        [RISCV_f27] = {"fs11"},
+[RISCV_f28] = {"ft8"},  [RISCV_f29] = {"ft9"},         [RISCV_f30] = {"ft10"},
+[RISCV_f31] = {"ft11"}, [RISCV_INVALID] = {"INVALID"}, [RISCV_spilled_in_memory] = {"spilled_in_memory"},
+};
+Register RISCVregs[] = {
+Register(false, RISCV_x0, INT64),    Register(false, RISCV_x1, INT64),    Register(false, RISCV_x2, INT64),
+Register(false, RISCV_x3, INT64),    Register(false, RISCV_x4, INT64),    Register(false, RISCV_x5, INT64),
+Register(false, RISCV_x6, INT64),    Register(false, RISCV_x7, INT64),    Register(false, RISCV_x8, INT64),
+Register(false, RISCV_x9, INT64),    Register(false, RISCV_x10, INT64),   Register(false, RISCV_x11, INT64),
+Register(false, RISCV_x12, INT64),   Register(false, RISCV_x13, INT64),   Register(false, RISCV_x14, INT64),
+Register(false, RISCV_x15, INT64),   Register(false, RISCV_x16, INT64),   Register(false, RISCV_x17, INT64),
+Register(false, RISCV_x18, INT64),   Register(false, RISCV_x19, INT64),   Register(false, RISCV_x20, INT64),
+Register(false, RISCV_x21, INT64),   Register(false, RISCV_x22, INT64),   Register(false, RISCV_x23, INT64),
+Register(false, RISCV_x24, INT64),   Register(false, RISCV_x25, INT64),   Register(false, RISCV_x26, INT64),
+Register(false, RISCV_x27, INT64),   Register(false, RISCV_x28, INT64),   Register(false, RISCV_x29, INT64),
+Register(false, RISCV_x30, INT64),   Register(false, RISCV_x31, INT64),   Register(false, RISCV_f0, FLOAT64),
+Register(false, RISCV_f1, FLOAT64),  Register(false, RISCV_f2, FLOAT64),  Register(false, RISCV_f3, FLOAT64),
+Register(false, RISCV_f4, FLOAT64),  Register(false, RISCV_f5, FLOAT64),  Register(false, RISCV_f6, FLOAT64),
+Register(false, RISCV_f7, FLOAT64),  Register(false, RISCV_f8, FLOAT64),  Register(false, RISCV_f9, FLOAT64),
+Register(false, RISCV_f10, FLOAT64), Register(false, RISCV_f11, FLOAT64), Register(false, RISCV_f12, FLOAT64),
+Register(false, RISCV_f13, FLOAT64), Register(false, RISCV_f14, FLOAT64), Register(false, RISCV_f15, FLOAT64),
+Register(false, RISCV_f16, FLOAT64), Register(false, RISCV_f17, FLOAT64), Register(false, RISCV_f18, FLOAT64),
+Register(false, RISCV_f19, FLOAT64), Register(false, RISCV_f20, FLOAT64), Register(false, RISCV_f21, FLOAT64),
+Register(false, RISCV_f22, FLOAT64), Register(false, RISCV_f23, FLOAT64), Register(false, RISCV_f24, FLOAT64),
+Register(false, RISCV_f25, FLOAT64), Register(false, RISCV_f26, FLOAT64), Register(false, RISCV_f27, FLOAT64),
+Register(false, RISCV_f28, FLOAT64), Register(false, RISCV_f29, FLOAT64), Register(false, RISCV_f30, FLOAT64),
+Register(false, RISCV_f31, FLOAT64),
+};
+// 获取可分配的寄存器列表（不考虑区间冲突）
+std::vector<int> RiscV64RegisterAllocTools::getValidRegs(LiveInterval interval) {
+    if (interval.getReg().type.data_type == MachineDataType::INT) {
+        return std::vector<int>({
+        RISCV_t1, RISCV_t2, RISCV_t3, RISCV_t4, RISCV_t5,  RISCV_t6,  RISCV_a0, RISCV_a1, RISCV_a2,
+        RISCV_a3, RISCV_a4, RISCV_a5, RISCV_a6, RISCV_a7, RISCV_s0,  RISCV_s1,  RISCV_s2, RISCV_s3, RISCV_s4,
+        RISCV_s5, RISCV_s6, RISCV_s7, RISCV_s8, RISCV_s9, RISCV_s10, RISCV_s11, RISCV_ra,
+        });
+    } else if (interval.getReg().type.data_type == MachineDataType::FLOAT) {
+        return std::vector<int>({
+        RISCV_f0,  RISCV_f1,  RISCV_f2,  RISCV_f3,  RISCV_f4,  RISCV_f5,  RISCV_f6,  RISCV_f7,
+        RISCV_f8,  RISCV_f9,  RISCV_f10, RISCV_f11, RISCV_f12, RISCV_f13, RISCV_f14, RISCV_f15,
+        RISCV_f16, RISCV_f17, RISCV_f18, RISCV_f19, RISCV_f20, RISCV_f21, RISCV_f22, RISCV_f23,
+        RISCV_f24, RISCV_f25, RISCV_f26, RISCV_f27, RISCV_f28, RISCV_f29, RISCV_f30, RISCV_f31,
+        });
+    } else {
+        //ERROR("Unsupported Reg data type");
+        return std::vector<int>();
+    }
+}
+
+// 生成从栈中读取溢出寄存器的指令
+Register RiscV64Spiller::GenerateReadCode(std::list<MachineBaseInstruction *>::iterator &it, int raw_stk_offset,
+                                          MachineDataType type) {
+    // it为指向发生寄存器溢出的指令的迭代器
+    // raw_stk_offset为该寄存器溢出到栈中的位置的偏移，相对于什么位置的偏移可以在调用时自行决定
+    // 创建一个新的寄存器，用于存放从堆栈读取的数据
+    auto read_mid_reg = function->GetNewRegister(type.data_type, type.data_length);
+    //TODO("GenerateReadSpillCode");
+
+
+    // 计算相对于当前堆栈指针的实际偏移量。
+    int offset = raw_stk_offset + function->GetStackOffset();
+
+    // 检查偏移量是否在可接受的立即数范围内
+    //bool isImmediateInRange = (offset >= -2048 && offset <= 2047);
+
+    if (offset <= 2047 && offset >= -2048){
+        // 如果数据类型是64位整数，则使用LD指令加载数据。
+        // 如果数据类型是64位浮点数，则使用FLD指令加载数据。
+         if (type == INT64) {
+            cur_block->insert(it, rvconstructor->ConstructIImm(RISCV_LD, read_mid_reg, GetPhysicalReg(RISCV_sp), offset));    // insert load
+        } else if (type == FLOAT64) {
+            cur_block->insert(it, rvconstructor->ConstructIImm(RISCV_FLD, read_mid_reg, GetPhysicalReg(RISCV_sp), offset));
+        }
+        } else {
+        // 对于超出立即数范围的偏移量，需要额外步骤：
+        // 1. 使用LI指令将偏移量加载到一个临时寄存器中。
+        // 2. 使用ADD指令将SP（堆栈指针）与临时寄存器相加。
+        // 3. 根据数据类型，使用相应的指令加载数据。
+
+        // 使用LI指令加载偏移量到寄存器
+        auto  offset_reg = function->GetNewRegister(INT64.data_type, INT64.data_length);
+        auto address_reg = function->GetNewRegister(INT64.data_type, INT64.data_length);
+
+        // 将偏移量加载到偏移量寄存器中
+        cur_block->insert(it, rvconstructor->ConstructUImm(RISCV_LI,  offset_reg, offset));
+
+        // 将堆栈指针和偏移量寄存器相加，计算新的地址
+        cur_block->insert(it, rvconstructor->ConstructR(RISCV_ADD, address_reg, GetPhysicalReg(RISCV_sp), offset_reg));
+
+        // 根据数据类型选择合适的加载指令，并使用地址寄存器
+        auto load_instr = (type == INT64) ? RISCV_LD : RISCV_FLD;
+        cur_block->insert(it, rvconstructor->ConstructIImm(load_instr, read_mid_reg, address_reg, 0));
+    }
+    
+
+    return read_mid_reg;
+}
+
+// 生成将溢出寄存器写入栈的指令
+Register RiscV64Spiller::GenerateWriteCode(std::list<MachineBaseInstruction *>::iterator &it, int raw_stk_offset,
+                                           MachineDataType type) {
+    // 获取新的中间寄存器，用于存储将要写入栈的值
+    auto write_mid_reg = function->GetNewRegister(type.data_type, type.data_length);
+    //TODO("GenerateWriteSpillCode");
+
+    int offset = raw_stk_offset + function->GetStackOffset();
+    // 在正确的位置插入新指令，首先将迭代器it前进一步
+    ++it;
+    bool isImmediateInRange = (offset >= -2048 && offset <= 2047);
+
+    if (isImmediateInRange) {
+        // 如果偏移量在立即数范围内，直接将数据存储到栈上
+        // 根据数据类型选择合适的存储指令
+         if (type == INT64) {
+            cur_block->insert(it, rvconstructor->ConstructSImm(RISCV_SD, write_mid_reg, GetPhysicalReg(RISCV_sp),
+                                                               offset));    // insert store
+        } else if (type == FLOAT64) {
+            cur_block->insert(it, rvconstructor->ConstructSImm(RISCV_FSD, write_mid_reg, GetPhysicalReg(RISCV_sp),
+                                                               offset));    // insert store
+        }
+    } else {
+        // 对于超出立即数范围的偏移量，先将偏移量加载到寄存器中
+        auto offset_reg = function->GetNewRegister(INT64.data_type, INT64.data_length);
+        auto addr_reg = function->GetNewRegister(INT64.data_type, INT64.data_length);
+
+        // 将偏移量加载到寄存器
+        cur_block->insert(it, rvconstructor->ConstructUImm(RISCV_LI, offset_reg, raw_stk_offset));
+
+        // 计算栈地址：将栈指针和偏移量相加
+        cur_block->insert(it, rvconstructor->ConstructR(RISCV_ADD, addr_reg, GetPhysicalReg(RISCV_sp), offset_reg));
+
+        // 根据数据类型选择合适的存储指令，将数据写入计算出的地址
+        auto store_instr = (type == INT64) ? RISCV_SD : RISCV_FSD;
+        cur_block->insert(it, rvconstructor->ConstructSImm(store_instr, write_mid_reg, addr_reg, 0));
+    }
+    //为了保持调用前后迭代器位置一致，将迭代器it回退一步
+    --it;
+
+
+    return write_mid_reg;
+}
+
+void RiscV64Spiller::GenerateCopyFromStackCode(std::list<MachineBaseInstruction*>::iterator &it, int raw_stk_offset, Register dest,  MachineDataType type) {
+    // 根据偏移量生成从栈中加载到寄存器的代码
+    auto stack_offset = raw_stk_offset + function->GetStackOffset();
+    if (stack_offset >= -2048 && stack_offset <= 2047) {
+        if (type == INT64) {
+            cur_block->insert(it, rvconstructor->ConstructIImm(RISCV_LD, dest, GetPhysicalReg(RISCV_sp), stack_offset));
+        } else if (type == FLOAT64) {
+            cur_block->insert(it, rvconstructor->ConstructIImm(RISCV_FLD, dest, GetPhysicalReg(RISCV_sp), stack_offset));
+        }
+    } else {
+        auto imm_reg = function->GetNewRegister(INT64.data_type, INT64.data_length);
+        auto offset_mid_reg = function->GetNewRegister(INT64.data_type, INT64.data_length);
+        cur_block->insert(it, rvconstructor->ConstructUImm(RISCV_LI, imm_reg, stack_offset));
+        cur_block->insert(it, rvconstructor->ConstructR(RISCV_ADD, offset_mid_reg, GetPhysicalReg(RISCV_sp), imm_reg));
+        if (type == INT64) {
+            cur_block->insert(it, rvconstructor->ConstructIImm(RISCV_LD, dest, offset_mid_reg, 0));
+        } else if (type == FLOAT64) {
+            cur_block->insert(it, rvconstructor->ConstructIImm(RISCV_FLD, dest, offset_mid_reg, 0));
+        }
+    }
+}
+
+void RiscV64Spiller::GenerateCopyToStackCode(std::list<MachineBaseInstruction*>::iterator &it, int raw_stk_offset, Register src, MachineDataType type) {
+    // 根据偏移量生成从寄存器存储到栈中的代码
+    auto stack_offset = raw_stk_offset + function->GetStackOffset();
+    if (stack_offset >= -2048 && stack_offset <= 2047) {
+        if (type == INT64) {
+            cur_block->insert(it, rvconstructor->ConstructIImm(RISCV_SD, src, GetPhysicalReg(RISCV_sp), stack_offset));
+        } else if (type == FLOAT64) {
+            cur_block->insert(it, rvconstructor->ConstructIImm(RISCV_FSD, src, GetPhysicalReg(RISCV_sp), stack_offset));
+        }
+    } else {
+        auto imm_reg = function->GetNewRegister(INT64.data_type, INT64.data_length);
+        auto offset_mid_reg = function->GetNewRegister(INT64.data_type, INT64.data_length);
+        cur_block->insert(it, rvconstructor->ConstructUImm(RISCV_LI, imm_reg, stack_offset));
+        cur_block->insert(it, rvconstructor->ConstructR(RISCV_ADD, offset_mid_reg, GetPhysicalReg(RISCV_sp), imm_reg));
+        if (type == INT64) {
+            cur_block->insert(it, rvconstructor->ConstructIImm(RISCV_SD, src, offset_mid_reg, 0));
+        } else if (type == FLOAT64) {
+            cur_block->insert(it, rvconstructor->ConstructIImm(RISCV_FSD, src, offset_mid_reg, 0));
+        }
+    }
+}
+
+

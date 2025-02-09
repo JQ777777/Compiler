@@ -1,0 +1,13 @@
+Program
+  FuncDef   Name:main   ReturnType: Int
+    Block   Size:3
+      VarDecls   Type: Int
+        VarDef   name:a   scope:1
+
+      AssignStmt:
+        Lval   Type: Int      name:a   scope:1
+        Intconst   val:10   Type: Int   ConstValue: 10
+      ReturnStmt:
+        MulExp_div: (/)   Type: Int   
+          Lval   Type: Int      name:a   scope:1
+          Intconst   val:3   Type: Int   ConstValue: 3

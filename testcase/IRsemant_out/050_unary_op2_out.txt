@@ -1,0 +1,55 @@
+Program
+  FuncDef   Name:main   ReturnType: Int
+    Block   Size:7
+      VarDecls   Type: Int
+        VarDef   name:a   scope:1
+
+        VarDef   name:b   scope:1
+
+      AssignStmt:
+        Lval   Type: Int      name:a   scope:1
+        Intconst   val:56   Type: Int   ConstValue: 56
+      AssignStmt:
+        Lval   Type: Int      name:b   scope:1
+        Intconst   val:4   Type: Int   ConstValue: 4
+      AssignStmt:
+        Lval   Type: Int      name:a   scope:1
+        AddExp_plus: (+)   Type: Int   
+          AddExp_sub: (-)   Type: Int   
+            Lval   Type: Int      name:a   scope:1
+            UnaryExp_neg:(-)   Type: Int   ConstValue: -4
+              Intconst   val:4   Type: Int   ConstValue: 4
+          UnaryExp_plus:(+)   Type: Int   
+            Lval   Type: Int      name:b   scope:1
+      IfElseStmt:
+      Cond   type:bool
+        UnaryExp_plus:(+)   Type: Int   
+          UnaryExp_neg:(-)   Type: Int   
+            UnaryExp_not:(!)   Type: Bool   
+              UnaryExp_not:(!)   Type: Bool   
+                UnaryExp_not:(!)   Type: Bool   
+                  Lval   Type: Int      name:a   scope:1
+      if_stmt:
+        BlockStmt:
+          Block   Size:1
+            AssignStmt:
+              Lval   Type: Int      name:a   scope:1
+              UnaryExp_neg:(-)   Type: Int   ConstValue: -1
+                UnaryExp_neg:(-)   Type: Int   ConstValue: 1
+                  UnaryExp_neg:(-)   Type: Int   ConstValue: -1
+                    Intconst   val:1   Type: Int   ConstValue: 1
+      else_Stmt:
+        BlockStmt:
+          Block   Size:1
+            AssignStmt:
+              Lval   Type: Int      name:a   scope:1
+              AddExp_plus: (+)   Type: Int   
+                Intconst   val:0   Type: Int   ConstValue: 0
+                UnaryExp_plus:(+)   Type: Int   
+                  Lval   Type: Int      name:b   scope:1
+      ExpressionStmt:   Type: Void   
+        FuncCall   name:putint   Type: Void   
+          FuncRParams:
+            Lval   Type: Int      name:a   scope:1
+      ReturnStmt:
+        Intconst   val:0   Type: Int   ConstValue: 0

@@ -1,0 +1,4 @@
+Undefined var in line 7
+
+while cond type is invalid 9
+

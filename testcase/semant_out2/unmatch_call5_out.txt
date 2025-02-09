@@ -1,0 +1,4 @@
+FuncRParam is void in line 5
+
+Function 'putch' expects 1 arguments, but 2 were provided in line 5
+

@@ -1,0 +1,2 @@
+if cond type is invalid 12
+

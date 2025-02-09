@@ -1,0 +1,6 @@
+Undefined var in line 6
+
+invalid operators in line 6
+
+return exp type is invalid 6
+

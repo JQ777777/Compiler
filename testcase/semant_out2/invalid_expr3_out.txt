@@ -1,0 +1,4 @@
+invalid operators in line 5
+
+Initval expression can not be void in line 5
+
